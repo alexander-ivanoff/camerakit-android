@@ -74,6 +74,8 @@ public class CameraView extends CameraViewLayout {
     private int mVideoQuality;
     private int mJpegQuality;
     private int mVideoBitRate;
+    private int mVideoEncoder;
+    private int mAudioEncoder;
     private boolean mLockVideoAspectRatio;
     private boolean mCropOutput;
     private boolean mDoubleTapToToggleFacing;
@@ -90,6 +92,7 @@ public class CameraView extends CameraViewLayout {
     private EventDispatcher mEventDispatcher;
 
     private FocusMarkerLayout focusMarkerLayout;
+    private CameraListener mCameraListener;
 
     public CameraView(@NonNull Context context) {
         this(context, null);
@@ -263,7 +266,16 @@ public class CameraView extends CameraViewLayout {
         sWorkerHandler.postDelayed(new Runnable() {
             @Override
             public void run() {
-                mCameraImpl.start();
+                try {
+                    mCameraImpl.start();
+                    if (mCameraListener != null) {
+                        mCameraListener.onCameraStartSuccess();
+                    }
+                } catch (Throwable e) {
+                    if (mCameraListener != null) {
+                        mCameraListener.onCameraStartError();
+                    }
+                }
             }
         }, 100);
     }
@@ -387,6 +399,16 @@ public class CameraView extends CameraViewLayout {
     public void setVideoBitRate(int videoBirRate) {
         this.mVideoBitRate = videoBirRate;
         mCameraImpl.setVideoBitRate(mVideoBitRate);
+    }
+
+    public void setVideoEncoder(int videoEncoder) {
+        this.mVideoEncoder = videoEncoder;
+        mCameraImpl.setVideoEncoder(mVideoEncoder);
+    }
+
+    public void setAudioEncoder(int audioEncoder) {
+        this.mAudioEncoder = audioEncoder;
+        mCameraImpl.setAudioEncoder(mAudioEncoder);
     }
 
     public void setLockVideoAspectRatio(boolean lockVideoAspectRatio) {
@@ -537,6 +559,16 @@ public class CameraView extends CameraViewLayout {
 
     public void bindCameraKitListener(Object object) {
         mEventDispatcher.addBinding(object);
+    }
+
+    public interface CameraListener {
+        void onCameraStartError();
+
+        void onCameraStartSuccess();
+    }
+
+    public void setCameraListener(CameraListener listener) {
+        mCameraListener = listener;
     }
 
 }

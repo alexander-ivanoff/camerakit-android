@@ -74,6 +74,11 @@ public class Camera1 extends CameraImpl {
     @VideoQuality
     private int mVideoQuality;
 
+    private int mVideoEncoder = MediaRecorder.VideoEncoder.H264;
+    private int mAudioEncoder = MediaRecorder.AudioEncoder.AAC;
+
+    private File mOutputVideoFile;
+
     private Detector<TextBlock> mTextDetector;
 
     private int mVideoBitRate;
@@ -502,16 +507,16 @@ public class Camera1 extends CameraImpl {
     void stopVideo() {
         synchronized (mCameraLock) {
             if (mRecording) {
-                File videoFile = getVideoFile();
-
                 try {
                     mMediaRecorder.stop();
                     if (this.mVideoCallback != null) {
-                        mVideoCallback.videoCaptured(videoFile);
+                        mVideoCallback.videoCaptured(mOutputVideoFile);
                         mVideoCallback = null;
                     }
                 } catch (RuntimeException e) {
-                    videoFile.delete();
+                    if (mOutputVideoFile != null) {
+                        mOutputVideoFile.delete();
+                    }
                 }
 
                 releaseMediaRecorder();
@@ -919,6 +924,7 @@ public class Camera1 extends CameraImpl {
             if (videoFile == null) {
                 return false;
             }
+            mOutputVideoFile = videoFile;
 
             mMediaRecorder.setOutputFile(videoFile.getPath());
             mMediaRecorder.setPreviewDisplay(mPreview.getSurface());
@@ -1021,6 +1027,14 @@ public class Camera1 extends CameraImpl {
             camcorderProfile.videoBitRate = mVideoBitRate;
         }
 
+        if (camcorderProfile != null && mAudioEncoder != 0) {
+            camcorderProfile.audioCodec = mAudioEncoder;
+        }
+
+        if (camcorderProfile != null && mVideoEncoder != 0) {
+            camcorderProfile.videoCodec = mVideoEncoder;
+        }
+
         return camcorderProfile;
     }
 
@@ -1083,5 +1097,16 @@ public class Camera1 extends CameraImpl {
         if (bottom > 2000) bottom = 2000;
 
         return new Rect(left - 1000, top - 1000, right - 1000, bottom - 1000);
+    }
+
+
+    @Override
+    public void setVideoEncoder(int videoEncoder) {
+        mVideoEncoder = videoEncoder;
+    }
+
+    @Override
+    public void setAudioEncoder(int audioEncoder) {
+        mAudioEncoder = audioEncoder;
     }
 }
